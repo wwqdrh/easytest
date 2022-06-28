@@ -2,12 +2,16 @@ package http_test
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 
 	"net/http/httptest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	easyhttptest "github.com/wwqdrh/easytest/httptest"
 )
 
@@ -58,4 +62,25 @@ func TestAutoHandle(t *testing.T) {
 			return nil
 		},
 	})
+}
+
+func TestHTTPFromJson(t *testing.T) {
+	// mock 实现
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	}))
+	defer ts.Close()
+
+	postmanJsonFile, err := os.Open("./testdata/gomall.postman_collection.json")
+	require.Nil(t, err)
+
+	postmanJsonData, err := ioutil.ReadAll(postmanJsonFile)
+	require.Nil(t, err)
+
+	specInfo, err := easyhttptest.NewPostmanSpecInfo(postmanJsonData, func(item *easyhttptest.PostmanItem) {
+		item.Request.Url.Host = strings.Split(ts.URL, ".")
+	})
+	require.Nil(t, err)
+
+	specInfo.StartHandle(t)
 }

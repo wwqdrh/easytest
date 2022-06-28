@@ -45,16 +45,18 @@ func NewHttpContext() *HttpContext {
 
 func (c *HttpContext) Do(t *testing.T, title string, option *HandleOption) {
 	req, err := http.NewRequest(option.Method, option.Url, option.Body)
-	require.Nil(t, err)
+	require.Nil(t, err, title)
 	for key, value := range c.ReqHeader(option.Header) {
 		req.Header.Add(key, value)
 	}
 	resp, err := http.DefaultClient.Do(req)
-	require.Nil(t, err)
+	require.Nil(t, err, title)
 	defer resp.Body.Close()
 
-	err = option.Handle(resp)
-	require.Nil(t, err)
+	if option.Handle != nil {
+		err = option.Handle(resp)
+		require.Nil(t, err, title)
+	}
 }
 
 func (c *HttpContext) Setenv(key string, value interface{}) {
