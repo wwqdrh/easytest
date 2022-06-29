@@ -9,7 +9,7 @@ require (
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/stretchr/testify v1.7.5
 	github.com/tj/assert v0.0.3
-	github.com/wwqdrh/logger v0.0.0-20220628040225-3597990e9075
+	github.com/wwqdrh/logger v0.0.0-20220629085142-1e491a365523
 	gorm.io/driver/postgres v1.3.7
 	gorm.io/gorm v1.23.6
 )

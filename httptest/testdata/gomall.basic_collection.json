@@ -1,0 +1,39 @@
+[
+    {
+        "name": "用户注册",
+        "url": "http://127.0.0.1:8000/api/user/register",
+        "method": "post",
+        "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
+        "content-type": "application/json",
+        "expect": [
+            "$contains($res, ok)"
+        ]
+    },
+    {
+        "name": "用户登录",
+        "url": "http://127.0.0.1:8000/api/user/login",
+        "method": "post",
+        "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
+        "content-type": "application/json",
+        "expect": [
+            "$contains($res, ok)"
+        ],
+        "event": [
+            "$env.token=$json.accessToken"
+        ]
+    },
+    {
+        "name": "用户信息",
+        "url": "http://127.0.0.1:8000/api/user/userinfo",
+        "method": "post",
+        "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
+        "content-type": "application/json",
+        "header": [
+            "Authorization: bearer {{token}}"
+        ],
+        "expect": [
+            "$status(200)",
+            "$contains($res, ok)"
+        ]
+    }
+]
