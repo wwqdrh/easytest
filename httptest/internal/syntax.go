@@ -17,6 +17,10 @@ type INode interface {
 }
 
 type SyntaxNode struct {
+	Type   string
+	Name   string
+	Params []*SyntaxNode
+
 	Token     Token
 	leftNode  INode
 	rightNode INode
@@ -78,10 +82,9 @@ func (s *SimpleParser) Parse() (*SyntaxNode, error) {
 	return s.list()
 }
 
-// 定义语义规则集
-// 三个元素:
-// list = list
-// list.list
+// 定义语义规则集，不同的符号有不同的规则
+// 1、. 取值符号，一个表达式中可以存在多个，将 a . b作为新的左参数
+// 2、= 赋值符号，左边的为左参数，右边的为右参数
 func (s *SimpleParser) list() (*SyntaxNode, error) {
 	var currNode *SyntaxNode
 
@@ -96,7 +99,18 @@ func (s *SimpleParser) list() (*SyntaxNode, error) {
 		}
 
 		switch token.Tag {
-		case DOT, EQ:
+		case DOT:
+			// 把下一个取出来
+		// 	token, err := s.Scan()
+		// if token.Tag == EOF {
+		// 	return currNode, io.EOF
+		// }
+		// &SyntaxNode{
+		// 	Type: "Expression",
+		// 	Name: ".",
+		// 	Params: [],
+		// }
+		case EQ:
 			currNode = NewSyntaxNode(token)
 			left := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
