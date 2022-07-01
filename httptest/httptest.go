@@ -78,7 +78,9 @@ func (c *HttpContext) Do(t *testing.T, title string, option *HandleOption) {
 	c.responseJson = jsonData
 
 	if option.Handle != nil {
-		option.Handle(resp)
+		if err := option.Handle(resp); err != nil {
+			return
+		}
 		// require.Nil(t, err, title)
 	}
 	// 处理response expect

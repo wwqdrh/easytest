@@ -137,7 +137,9 @@ func (l *Lexer) reserve() {
 func (l *Lexer) ReverseScan() {
 	backLen := len(l.Lexeme)
 	for i := 0; i < backLen; i++ {
-		l.reader.UnreadByte()
+		if err := l.reader.UnreadByte(); err != nil {
+			return
+		}
 	}
 
 	l.lexemeStack = l.lexemeStack[:len(l.lexemeStack)-1]
@@ -165,7 +167,9 @@ func (l *Lexer) ReadCharacter(c byte) (bool, error) {
 		return false, nil
 	}
 
-	l.Readch()
+	if err := l.Readch(); err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -218,7 +222,9 @@ func (l *Lexer) Scan() (Token, error) {
 		for {
 			num, err := strconv.Atoi(string(l.peek))
 			if err != nil {
-				l.UnRead()
+				if err := l.UnRead(); err != nil {
+					break
+				}
 				break
 			} else {
 				l.Lexeme += string(l.peek)
@@ -244,10 +250,14 @@ func (l *Lexer) Scan() (Token, error) {
 		x := float64(v)
 		d := float64(10)
 		for {
-			l.Readch()
+			if err := l.Readch(); err != nil {
+				break
+			}
 			num, err := strconv.Atoi(string(l.peek))
 			if err != nil {
-				l.UnRead()
+				if err := l.UnRead(); err != nil {
+					break
+				}
 				break
 			}
 
@@ -272,7 +282,9 @@ func (l *Lexer) Scan() (Token, error) {
 				break
 			}
 			if !unicode.IsLetter(rune(l.peek)) {
-				l.UnRead()
+				if err := l.UnRead(); err != nil {
+					break
+				}
 				break
 			}
 		}
@@ -301,7 +313,9 @@ func (l *Lexer) ScanKeyword() (KeyWord, error) {
 			break
 		}
 		if !unicode.IsLetter(rune(l.peek)) {
-			l.UnRead()
+			if err := l.UnRead(); err != nil {
+				break
+			}
 			break
 		}
 	}
