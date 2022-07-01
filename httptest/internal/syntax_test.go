@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"encoding/json"
 	"io"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,15 +24,15 @@ func TestSimpleParse(t *testing.T) {
 						"name": ".",
 						"params": [
 							{
-								"type": "variable",
+								"type": "global",
 								"name": "$res"
 							}, {
-								"type": "variable",
+								"type": "global",
 								"name": "$body"
 							}
 						]
 					}, {
-						"type": "variable",
+						"type": "attr",
 						"name": "$json"
 					}
 				]
@@ -49,24 +51,19 @@ func TestSimpleParse(t *testing.T) {
 			"name": ".",
 			"params": [
 				{
+					"type": "global",
+					"name": "$env"
+				}, {
 					"type": "variable",
-					"params": [
-						"type": "global",
-						"name": "$env"
-					]
-				},
-				{
-					"type": "variable",
-					"params": [
-						"type": "attr",
-						"name": "a"
-					]
+					"name": "indentifer",
+					"value": "a"
 				}
 			]
 		},
 		{
-			"type": "literal",
-			"name": "1"
+			"type": "literial",
+			"name": "num",
+			"value": 1
 		}
 	]
 }`,
@@ -77,6 +74,13 @@ func TestSimpleParse(t *testing.T) {
 		p := NewSimpleParser(NewLexer(item.source))
 		node, err := p.Parse()
 		assert.Equal(t, io.EOF, err)
-		assert.Equal(t, item.target, node.Attribute())
+
+		var target SyntaxNode
+		var source SyntaxNode
+		assert.Nil(t, json.Unmarshal([]byte(item.target), &target))
+		sourceData, err := json.Marshal(node)
+		assert.Nil(t, err)
+		assert.Nil(t, json.Unmarshal(sourceData, &source))
+		assert.True(t, reflect.DeepEqual(target, source))
 	}
 }

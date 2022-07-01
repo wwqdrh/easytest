@@ -74,12 +74,15 @@ var keyWord = []KeyWord{
 // token字符分类
 type Token struct {
 	Tag Tag
+	Raw interface{}
 }
 
 func NewToken(tag Tag) Token {
-	return Token{
+	token := Token{
 		Tag: tag,
 	}
+	token.Raw = token.String()
+	return token
 }
 
 func (t *Token) String() string {
@@ -222,14 +225,18 @@ func (l *Lexer) Scan() (Token, error) {
 			}
 			v = v*10 + num
 			if l.Readch() == io.EOF {
-				return NewToken(NUM), nil
+				token := NewToken(NUM)
+				token.Raw = v
+				return token, nil
 			}
 		}
 
 		if l.peek != '.' {
 			// 整型
 			l.lexemeStack = append(l.lexemeStack, fmt.Sprint(v))
-			return NewToken(NUM), err
+			token := NewToken(NUM)
+			token.Raw = v
+			return token, err
 		}
 		l.Lexeme += string(l.peek)
 
@@ -249,7 +256,9 @@ func (l *Lexer) Scan() (Token, error) {
 			l.Lexeme += string(l.peek)
 		}
 		l.lexemeStack = append(l.lexemeStack, fmt.Sprint(x))
-		return NewToken(REAL), err
+		token := NewToken(REAL)
+		token.Raw = x
+		return token, err
 	}
 
 	// 读取变量字符串
@@ -273,7 +282,10 @@ func (l *Lexer) Scan() (Token, error) {
 			return token, nil
 		}
 		l.lexemeStack = append(l.lexemeStack, l.Lexeme)
-		return NewToken(INDENTIFER), nil // 变量字符串
+
+		token = NewToken(INDENTIFER)
+		token.Raw = string(buffer)
+		return token, nil // 变量字符串
 	}
 
 	return NewToken(EOF), io.EOF
@@ -285,7 +297,9 @@ func (l *Lexer) ScanKeyword() (KeyWord, error) {
 		buffer = append(buffer, l.peek)
 		l.Lexeme += string(l.peek)
 
-		l.Readch()
+		if err := l.Readch(); err == io.EOF {
+			break
+		}
 		if !unicode.IsLetter(rune(l.peek)) {
 			l.UnRead()
 			break
