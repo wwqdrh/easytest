@@ -2,31 +2,22 @@ package gomock
 
 //go:generate mockgen -package gomock -source foo.go -destination=foo_mock.go
 
-// Life 人生
-type Life interface {
-	// GoodGoodStudy 好好学习
-	GoodGoodStudy(money int64) error
-	// BuyHouse 买房
-	BuyHouse(money int64) error
-	// Marry 结婚
-	Marry(money int64) error
+import (
+	"log"
+)
+
+//定义了一个订单接口，有一个获取名称的方法
+type OrderDBI interface {
+	GetName(orderid int) string
 }
 
-// Person 普通人
-type Person struct {
-	life Life
+//定义结构体
+type OrderInfo struct {
+	orderid int
 }
 
-// Live 活着
-func (p *Person) Live(money1, money2, money3 int64) error {
-	if err := p.life.GoodGoodStudy(money1); err != nil {
-		return err
-	}
-	if err := p.life.BuyHouse(money2); err != nil {
-		return err
-	}
-	if err := p.life.Marry(money3); err != nil {
-		return err
-	}
-	return nil
+//实现接口的方法
+func (order OrderInfo) GetName(orderid int) string {
+	log.Println("原本应该连接数据库去取名称")
+	return "xdcute"
 }

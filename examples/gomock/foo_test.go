@@ -1,45 +1,28 @@
 package gomock
 
 import (
-	"errors"
+	"log"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestLive(t *testing.T) {
+func TestGetName(t *testing.T) {
+	//新建一个mockController
 	ctrl := gomock.NewController(t)
-	life := NewMockLife(ctrl)
-	handler := func(money int64) error {
-		if money <= 0 {
-			return errors.New("error")
-		}
-		return nil
+	// 断言 DB.GetName() 方法是否被调用
+	defer ctrl.Finish()
+
+	//mock接口
+	mock := NewMockOrderDBI(ctrl)
+	//模拟传入值与预期的返回值
+	mock.EXPECT().GetName(gomock.Eq(1225)).Return("xdcutecute")
+
+	//前面定义了传入值与返回值
+	//在这里
+	if v := mock.GetName(1225); v != "xdcutecute" {
+		t.Fatal("expected xdcute, but got", v)
+	} else {
+		log.Println("通过mock取到的name：", v)
 	}
-	life.EXPECT().GoodGoodStudy(gomock.Any()).AnyTimes().DoAndReturn(handler)
-	life.EXPECT().BuyHouse(gomock.Any()).AnyTimes().DoAndReturn(handler)
-	life.EXPECT().Marry(gomock.Any()).AnyTimes().DoAndReturn(handler)
-	Convey("Live", t, func() {
-		person := &Person{
-			life: life,
-		}
-		Convey("GoodGoodStudy  error", func() {
-			So(person.Live(0, 100, 100), ShouldBeError)
-		})
-		Convey("GoodGoodStudy  ok", func() {
-			Convey("BuyHouse  error", func() {
-				So(person.Live(100, 0, 100), ShouldBeError)
-			})
-			Convey("BuyHouse  ok", func() {
-				Convey("Marry  error", func() {
-					So(person.Live(100, 100, 0), ShouldBeError)
-				})
-				Convey("Marry  ok", func() {
-					So(person.Live(100, 100, 100), ShouldBeNil)
-				})
-			})
-		})
-	})
 }
