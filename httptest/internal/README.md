@@ -1,3 +1,5 @@
+caller执行的时候需要httpctx的上下文
+
 ## 关键字
 
 - $env: 上下文的环境变量
@@ -14,3 +16,19 @@
 
 - .: 取对象的值, 后面接将数据格式如何转换, 存在关键字或者普通变量, 普通变量时默认将前面的数据转为json后处理
 - =: 赋值语句
+
+## TODO
+
+1、从响应中获取header并加在环境变量中
+
+`$env.token = $resjson.accessToken`
+
+2、判断相应中是否包含ok字符串
+
+`$contains($resbody, "ok")`
+
+3、占位符的实现
+
+例如为req header添加环境变量时
+
+`Authorization: bearer {{ $env.token }}`

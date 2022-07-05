@@ -3,6 +3,7 @@ module github.com/wwqdrh/easytest
 go 1.17
 
 require (
+	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.7.5
 	github.com/wwqdrh/logger v0.0.0-20220629085142-1e491a365523
 )
