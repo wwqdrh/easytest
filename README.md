@@ -62,20 +62,20 @@
         "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
         "content-type": "application/json",
         "expect": [
-            "$contains($res, ok)"
+            "@contain($res.$body.$str, \"ok\")"
         ]
     },
     {
         "name": "用户登录",
         "url": "http://127.0.0.1:8000/api/user/login",
         "method": "post",
-        "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
+        "body": "{\"name\":\"ving\",\"gender\":1,\"mobile\": \"15212230311\",\"password\": \"123456\"}",
         "content-type": "application/json",
         "expect": [
-            "$contains($res, ok)"
+            "@contain($res.$body.$str, \"ok\")"
         ],
         "event": [
-            "$env.token=$json.accessToken"
+            "$env.token = $res.$body.$json.accessToken"
         ]
     },
     {
@@ -85,15 +85,16 @@
         "body": "{\r\n    \"name\":\"ving\",\r\n    \"gender\":1,\r\n    \"mobile\": \"15212230311\",\r\n    \"password\": \"123456\"\r\n}\r\n",
         "content-type": "application/json",
         "header": [
-            "Authorization: bearer {{token}}"
+            "Authorization: bearer {{ token }}"
         ],
         "expect": [
-            "$status(200)",
-            "$contains($res, ok)"
+            "@contain($res.$body.$str, \"ok\")"
         ]
     }
 ]
 ```
+
+### 集成在单元测试
 
 ```go
 
@@ -115,7 +116,7 @@ func TestHTTPByJSON() {
 	postmanJsonData, err := ioutil.ReadAll(postmanJsonFile)
 	require.Nil(t, err)
 
-	specInfo, err := NewBasicSpecInfo(postmanJsonData, func(item *BasicItem) {
+	specInfo, err := NewBasicParserSpecInfo(postmanJsonData, func(item *BasicItem) {
 		item.Url = ts.URL
 	})
 	require.Nil(t, err)
@@ -123,3 +124,12 @@ func TestHTTPByJSON() {
 	specInfo.StartHandle(t)
 }
 ```
+
+### 二进制工具
+
+
+```shell
+go install github.com/wwqdrh/easytest/cmd/etcli@latest
+```
+
+- json: 指定需要检查的文件(格式与上面的一样)

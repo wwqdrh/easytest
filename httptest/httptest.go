@@ -1,6 +1,7 @@
 package httptest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,6 +27,9 @@ func init() {
 }
 
 type HttpContext struct {
+	request  *http.Request
+	response *http.Response
+
 	enviroment map[string]interface{}
 
 	responseStatus int
@@ -51,16 +55,48 @@ func NewHttpContext() *HttpContext {
 	}
 }
 
+func (c *HttpContext) CopyResponse(resp *http.Response) *http.Response {
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	newResponse := *resp
+	newResponse.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	return &newResponse
+}
+
 func (c *HttpContext) Do(t *testing.T, title string, option *HandleOption) {
+	c.do(t, title, option)
+	// 处理response expect
+	assert.True(t, HandleExpect(c, option.Expect))
+	// 处理event
+	assert.True(t, HandleEvent(c, option.Event))
+}
+
+func (c *HttpContext) DoParser(t *testing.T, title string, option *HandleOption) {
+	c.do(t, title, option)
+
+	res := ParserHandleExpect(c, option.Expect)
+	if !res {
+		panic(c.request.URL.Path + "测试失败")
+	}
+
+	ParserHandleEvent(c, option.Event)
+}
+
+func (c *HttpContext) do(t *testing.T, title string, option *HandleOption) {
 	req, err := http.NewRequest(option.Method, option.Url, option.Body)
 	require.Nil(t, err, title)
+	c.request = req
 	for key, value := range c.ReqHeader(option.Header) {
 		req.Header.Add(key, value)
 	}
+
 	resp, err := http.DefaultClient.Do(req)
 	require.Nil(t, err, title)
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	c.response = c.CopyResponse(resp)
+
+	curpRes := c.CopyResponse(resp)
+	// defer curpRes.Body.Close()
+	body, err := ioutil.ReadAll(curpRes.Body)
 	if err != nil {
 		logger.DefaultLogger.Warn(err.Error())
 		return
@@ -83,10 +119,6 @@ func (c *HttpContext) Do(t *testing.T, title string, option *HandleOption) {
 		}
 		// require.Nil(t, err, title)
 	}
-	// 处理response expect
-	assert.True(t, HandleExpect(c, option.Expect))
-	// 处理event
-	assert.True(t, HandleEvent(c, option.Event))
 }
 
 func (c *HttpContext) Setenv(key string, value interface{}) {
@@ -99,7 +131,7 @@ func (c *HttpContext) ReqHeader(header map[string]string) map[string]string {
 		res[key] = value
 		for _, v := range envReg.FindAllStringSubmatch(value, -1) {
 			if len(v) == 2 {
-				envVal := c.enviroment[v[1]]
+				envVal := c.enviroment[strings.TrimSpace(v[1])]
 				if envVal != "" {
 					res[key] = strings.Replace(res[key], v[0], fmt.Sprint(envVal), 1)
 				}

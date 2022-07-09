@@ -54,6 +54,8 @@ type PostmanItem struct {
 
 type BasicSpecInfo []*BasicItem
 
+type BasicParserSpecInfo BasicSpecInfo
+
 type BasicItem struct {
 	Name        string   `json:"name"`
 	Url         string   `json:"url"`
@@ -133,6 +135,49 @@ func (s *BasicSpecInfo) StartHandle(t *testing.T) error {
 }
 
 func (s *BasicSpecInfo) specReq2option(item *BasicItem) *HandleOption {
+	header := map[string]string{}
+	for _, item := range item.Header {
+		pairs := strings.Split(item, ":")
+		if len(pairs) == 2 {
+			header[strings.TrimSpace(pairs[0])] = strings.TrimSpace(pairs[1])
+		}
+	}
+
+	return &HandleOption{
+		Url:         item.Url,
+		Method:      item.Method,
+		ContentType: item.ContentType,
+		Header:      header,
+		Body:        strings.NewReader(item.Body),
+		Expect:      item.Expect,
+		Event:       item.Event,
+	}
+}
+
+func NewBasicParserSpecInfo(data []byte, patch func(item *BasicItem)) (*BasicParserSpecInfo, error) {
+	var res BasicParserSpecInfo
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, err
+	}
+
+	if patch != nil {
+		for _, item := range res {
+			patch(item)
+		}
+	}
+	return &res, nil
+}
+
+func (s *BasicParserSpecInfo) StartHandle(t *testing.T) error {
+	ctx := NewHttpContext()
+	for _, item := range *s {
+		opt := s.specReq2option(item)
+		ctx.DoParser(t, item.Name, opt)
+	}
+	return nil
+}
+
+func (s *BasicParserSpecInfo) specReq2option(item *BasicItem) *HandleOption {
 	header := map[string]string{}
 	for _, item := range item.Header {
 		pairs := strings.Split(item, ":")
