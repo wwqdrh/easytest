@@ -133,3 +133,4 @@ go install github.com/wwqdrh/easytest/cmd/etcli@latest
 ```
 
 - json: 指定需要检查的文件(格式与上面的一样)
+- check: 测试当前版本功能是否正常

@@ -57,7 +57,8 @@ func checkRun() {
 			"msg":         "ok",
 			"accessToken": "123456",
 		})
-		w.Write(body)
+		_, err := w.Write(body)
+		logger.DefaultLogger.Error(err.Error())
 	}))
 	defer ts.Close()
 
