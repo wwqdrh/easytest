@@ -68,6 +68,44 @@ func TestSimpleParse(t *testing.T) {
 	]
 }`,
 		},
+		{
+			source: `@contain($res.$body.$str, "ok")`,
+			target: `
+{
+	"type": "callable",
+	"name": "@contain",
+	"params": [
+		{
+			"type": "expression",
+			"name": ".",
+			"params": [
+					{
+						"type": "expression",
+						"name": ".",
+						"params": [
+							{
+								"type": "global",
+								"name": "$res"
+							}, {
+								"type": "global",
+								"name": "$body"
+							}
+						]
+					}, {
+						"type": "attr",
+						"name": "$str"
+					}
+				]
+		},
+		{
+			"type": "variable",
+			"name": "indentifer",
+			"value": "ok"
+		}
+	]
+}
+			`,
+		},
 	}
 
 	for _, item := range pairs {

@@ -19,14 +19,6 @@ caller执行的时候需要httpctx的上下文
 
 ## TODO
 
-1、从响应中获取header并加在环境变量中
-
-`$env.token = $resjson.accessToken`
-
-2、判断相应中是否包含ok字符串
-
-`$contains($resbody, "ok")`
-
 3、占位符的实现
 
 例如为req header添加环境变量时

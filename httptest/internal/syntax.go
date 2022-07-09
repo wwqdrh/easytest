@@ -1,12 +1,16 @@
 package internal
 
 import (
+	"errors"
+	"fmt"
 	"io"
 )
 
 // 语法解析
 
 // 抽象语法树的节点
+
+var ErrAst = errors.New("AST ERROR")
 
 type SimpleParser struct {
 	Lexer
@@ -49,10 +53,19 @@ func (s *SimpleParser) list() (*SyntaxNode, error) {
 		}
 
 		switch token.Tag {
+		case CONTAIN:
+			if err := s.parseContain(); err != nil {
+				return nil, err
+			}
 		case DOT:
 			if err := s.parseDOT(); err != nil {
 				return nil, err
 			}
+		case COMMA, RIGHT_PATERN:
+			// 解析到逗号，当前解析的部分返回
+			node := s.nodeStack[len(s.nodeStack)-1]
+			s.nodeStack = s.nodeStack[:len(s.nodeStack)-1]
+			return node, nil
 		case ASSIGN_OPERATOR:
 			if err := s.parseASSIGN(); err != nil {
 				return nil, err
@@ -61,6 +74,29 @@ func (s *SimpleParser) list() (*SyntaxNode, error) {
 			s.nodeStack = append(s.nodeStack, s.builderNode(token))
 		}
 	}
+}
+
+// 下一个必须为left_pate然后有一个right_pate, 并且两者之间相差两个元素
+func (s *SimpleParser) parseContain() error {
+	nextToken, err := s.Scan()
+	if nextToken.Tag != LEFT_PATREN || err != nil {
+		return fmt.Errorf("%w: contain下一个token必须为LEFT_PATREN", ErrAst)
+	}
+
+	param1, err := s.list()
+	if err != nil {
+		return fmt.Errorf("%w: 解析失败", ErrAst)
+	}
+
+	param2, err := s.list()
+	if err != nil {
+		return fmt.Errorf("%w: 解析失败", ErrAst)
+	}
+
+	call := s.builderNode(NewToken(CONTAIN))
+	call.Params = append(call.Params, param1, param2)
+	s.nodeStack = append(s.nodeStack, call)
+	return nil
 }
 
 func (s *SimpleParser) parseDOT() error {
@@ -105,7 +141,12 @@ func (s *SimpleParser) builderNode(token Token) *SyntaxNode {
 			Type: "global",
 			Name: token.String(),
 		}
-	case JSON, RAW:
+	case CONTAIN:
+		return &SyntaxNode{
+			Type: "callable",
+			Name: token.String(),
+		}
+	case JSON, RAW, STR:
 		return &SyntaxNode{
 			Type: "attr",
 			Name: token.String(),

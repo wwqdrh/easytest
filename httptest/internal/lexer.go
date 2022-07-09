@@ -19,17 +19,23 @@ const (
 	RES
 	REQ
 	RAW
+	STR
 	BODY
 	JSON
 	HEADER
 
 	// 全局函数
-	IN
+	CONTAIN
 
 	// 操作符
 	EQ
 	ASSIGN_OPERATOR
 	DOT
+
+	// 括号
+	LEFT_PATREN
+	RIGHT_PATERN
+	COMMA
 
 	// 字面量
 	NUM        // 数字
@@ -46,13 +52,17 @@ var tokenMap = map[Tag]string{
 	RES:             "$res",
 	REQ:             "$req",
 	RAW:             "$raw",
+	STR:             "$str",
 	BODY:            "$body",
 	JSON:            "$json",
 	HEADER:          "$header",
-	IN:              "$in",
+	CONTAIN:         "@contain",
 	EQ:              "==",
 	ASSIGN_OPERATOR: "=",
 	DOT:             ".",
+	LEFT_PATREN:     "(",
+	RIGHT_PATERN:    ")",
+	COMMA:           ",",
 	NUM:             "num",
 	REAL:            "real",
 	INDENTIFER:      "indentifer",
@@ -65,10 +75,11 @@ var keyWord = []KeyWord{
 	NewKeyWord(RES),
 	NewKeyWord(REQ),
 	NewKeyWord(RAW),
+	NewKeyWord(STR),
 	NewKeyWord(JSON),
 	NewKeyWord(BODY),
 	NewKeyWord(HEADER),
-	NewKeyWord(IN),
+	NewKeyWord(CONTAIN),
 }
 
 // token字符分类
@@ -207,8 +218,24 @@ func (l *Lexer) Scan() (Token, error) {
 		}
 
 		return keyword.Tag, nil
+	case '@':
+		// 说明是函数
+		keyword, err := l.ScanKeyword()
+		if err != nil {
+			return NewToken(ERROR), err
+		}
+		return keyword.Tag, nil
+	case '(':
+		return NewToken(LEFT_PATREN), nil
+	case ')':
+		return NewToken(RIGHT_PATERN), nil
+	case ',':
+		return NewToken(COMMA), nil
 	case '.':
 		return NewToken(DOT), nil
+	case '"':
+		// 字符串
+		return l.ScanString()
 	case '=':
 		l.Lexeme = "="
 		l.lexemeStack = append(l.lexemeStack, "=")
@@ -327,4 +354,27 @@ func (l *Lexer) ScanKeyword() (KeyWord, error) {
 		}
 	}
 	return KeyWord{}, errors.New("非关键字")
+}
+
+func (l *Lexer) ScanString() (Token, error) {
+	var buffer []byte
+	for {
+		buffer = append(buffer, l.peek)
+		l.Lexeme += string(l.peek)
+
+		if err := l.Readch(); err == io.EOF {
+			break
+		}
+		if !unicode.IsLetter(rune(l.peek)) && l.peek != '"' {
+			if err := l.UnRead(); err != nil {
+				break
+			}
+			break
+		}
+	}
+
+	return Token{
+		INDENTIFER,
+		string(buffer),
+	}, nil
 }

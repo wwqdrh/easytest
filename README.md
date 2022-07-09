@@ -45,6 +45,14 @@
 *节省时间，时间就是金钱*
 
 
+### 现在支持的语法列表
+
+- `$res.$body.$json`: 返回响应body的json格式
+- `$env.a = 1`: 设置环境变量
+- `$env.token = $res.$body.$json.accessToken`: 获取响应的accessToken并作为环境变量
+- `@contain($res.$body.$str, "ok")`: 判断响应体中是否包含ok字符串
+- `$env.token`: 返回环境变量中的token
+
 ```json
 [
     {
