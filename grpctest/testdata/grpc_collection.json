@@ -1,0 +1,11 @@
+[
+    {
+        "name": "SayHello",
+        "url": "http://127.0.0.1:8000",
+        "proto": "./testdata/greeter.proto",
+        "call": "helloworld.Greeter.SayHello",
+        "expect": [
+            "@contain($res.$body.$str, \"ok\")"
+        ]
+    }
+]

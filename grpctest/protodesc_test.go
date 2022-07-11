@@ -21,6 +21,8 @@ import (
 	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
+// 连接已经启动的grpc服务获取服务信息
+
 type GrpcDescribeTestSuite struct {
 	suite.Suite
 
@@ -131,6 +133,29 @@ func (suite *GrpcDescribeTestSuite) TestProtodesc_GetMethodDescFromReflect() {
 		assert.Nil(t, mtd)
 	})
 }
+
+// func (suite *GrpcDescribeTestSuite) TestByCollection() {
+// 	collections, err := NewCollections("./testdata/grpc_collection.json", nil)
+// 	require.Nil(suite.T(), err)
+
+// 	// mock server
+// 	var opts []grpc.DialOption
+// 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+// 	ctx := context.Background()
+// 	conn, err := grpc.DialContext(ctx, suite.TestLocalhost, opts...)
+// 	assert.NoError(suite.T(), err)
+
+// 	md := make(metadata.MD)
+// 	refCtx := metadata.NewOutgoingContext(ctx, md)
+// 	refClient := grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(conn))
+
+// 	for _, collect := range collections {
+// 		mtd, err := GetMethodDescFromReflect(collect.Call, refClient)
+// 		assert.NoError(suite.T(), err)
+// 		assert.NotNil(suite.T(), mtd)
+// 		assert.Equal(suite.T(), "SayHello", mtd.GetName())
+// 	}
+// }
 
 func TestProtodesc_GetMethodDescFromProto(t *testing.T) {
 	t.Run("invalid path", func(t *testing.T) {
