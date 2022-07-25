@@ -201,8 +201,12 @@ func CallerFuntion(c IHTTPCtx, node *SyntaxNode) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		return strings.Contains(fmt.Sprint(val1), fmt.Sprint(val2)), nil
+		val2Str, ok := val2.(string)
+		if !ok {
+			return nil, errors.New("第二个值非字符串")
+		}
+		val2Str = fmt.Sprintf("%#v", val2Str)
+		return strings.Contains(fmt.Sprint(val1), val2Str), nil
 	}
 	return nil, errors.New("TODO")
 }
@@ -214,11 +218,11 @@ func wrapResBody(body []byte) IInstance {
 			case "$json":
 				res := map[string]interface{}{}
 				if err := json.Unmarshal(body, &res); err != nil {
-					return nil
+					return err
 				}
 				return wrapDict(res)
 			case "$str":
-				return string(body)
+				return fmt.Sprint(string(body))
 			default:
 				return nil
 			}

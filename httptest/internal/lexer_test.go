@@ -49,4 +49,26 @@ func TestLexerParse(t *testing.T) {
 			break
 		}
 	}
+
+	// 测试中文
+	source = `@contain($res.$body.$str, "请求成功")`
+	lexerParse = NewLexer(source)
+	for {
+		token, _ := lexerParse.Scan()
+		fmt.Println(token.String(), token.Raw)
+		if token.Tag == EOF {
+			break
+		}
+	}
+
+	// 测试转义
+	source = `@contain($res.$body.$str, "ok")`
+	lexerParse = NewLexer(source)
+	for {
+		token, _ := lexerParse.Scan()
+		fmt.Println(token.String(), token.Raw)
+		if token.Tag == EOF {
+			break
+		}
+	}
 }

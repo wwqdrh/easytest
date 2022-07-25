@@ -23,11 +23,14 @@ func TestCaller(t *testing.T) {
 	suite.Run(t, new(CallerTestSuite))
 }
 
+// 变成字符串后 => "{\"accessToken\":\"12345\",\"msg\":\"ok\",\"msgwithline\":\"\\\"ok\\\"\",\"msgzh\""
 func (suite *CallerTestSuite) SetupTest() {
 	suite.mockServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := json.Marshal(map[string]interface{}{
 			"msg":         "ok",
 			"accessToken": "12345",
+			"msgzh":       "请求成功",
+			"msgwithline": `"ok"`,
 		})
 		w.Write(body)
 	}))
@@ -136,6 +139,50 @@ func (suite *CallerTestSuite) TestCaller4() {
 	mock.EXPECT().GetEnv(gomock.Eq("token")).AnyTimes().Return("12345")
 
 	val, err := DoCaller(mock, `$env.token`)
+	require.Nil(t, err)
+	fmt.Println(val)
+}
+
+func (suite *CallerTestSuite) TestContainerWithUtf8() {
+	t := suite.T()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockReuqest, err := http.NewRequest("get", suite.mockServer.URL, nil)
+	require.Nil(t, err)
+	mockResponse, err := http.DefaultClient.Do(mockReuqest)
+	require.Nil(t, err)
+
+	mock := NewMockIHTTPCtx(ctrl)
+	mock.EXPECT().GetRequest().AnyTimes().Return(mockReuqest)
+	mock.EXPECT().GetResponse().AnyTimes().Return(mockResponse)
+	mock.EXPECT().SetEnv(gomock.Eq("token"), gomock.Eq("12345")).AnyTimes()
+	mock.EXPECT().GetEnv(gomock.Eq("token")).AnyTimes().Return("12345")
+
+	val, err := DoCaller(mock, `@contain($res.$body.$str, "请求成功")`)
+	require.Nil(t, err)
+	fmt.Println(val)
+}
+
+func (suite *CallerTestSuite) TestContainerWithline() {
+	t := suite.T()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockReuqest, err := http.NewRequest("get", suite.mockServer.URL, nil)
+	require.Nil(t, err)
+	mockResponse, err := http.DefaultClient.Do(mockReuqest)
+	require.Nil(t, err)
+
+	mock := NewMockIHTTPCtx(ctrl)
+	mock.EXPECT().GetRequest().AnyTimes().Return(mockReuqest)
+	mock.EXPECT().GetResponse().AnyTimes().Return(mockResponse)
+	mock.EXPECT().SetEnv(gomock.Eq("token"), gomock.Eq("12345")).AnyTimes()
+	mock.EXPECT().GetEnv(gomock.Eq("token")).AnyTimes().Return("12345")
+
+	val, err := DoCaller(mock, `@contain($res.$body.$str, "\"ok\"")`)
 	require.Nil(t, err)
 	fmt.Println(val)
 }

@@ -121,7 +121,7 @@ func (w *KeyWord) String() string {
 type Lexer struct {
 	Lexeme      string
 	lexemeStack []string
-	peek        byte             // 读入的字符
+	peek        rune             // 读入的字符
 	line        int              // 当前字符串处于第几行
 	reader      *bufio.Reader    // 用于读取字节流
 	keyWords    map[string]Token // 存储关键字
@@ -129,7 +129,7 @@ type Lexer struct {
 
 func NewLexer(source string) Lexer {
 	str := strings.NewReader(source)
-	sourceReader := bufio.NewReaderSize(str, len(source))
+	sourceReader := bufio.NewReaderSize(str, len([]rune(source)))
 	lexer := Lexer{
 		line:     1,
 		reader:   sourceReader,
@@ -148,7 +148,7 @@ func (l *Lexer) reserve() {
 func (l *Lexer) ReverseScan() {
 	backLen := len(l.Lexeme)
 	for i := 0; i < backLen; i++ {
-		if err := l.reader.UnreadByte(); err != nil {
+		if err := l.reader.UnreadRune(); err != nil {
 			return
 		}
 	}
@@ -158,13 +158,13 @@ func (l *Lexer) ReverseScan() {
 }
 
 func (l *Lexer) Readch() error {
-	char, err := l.reader.ReadByte()
-	l.peek = char
+	r, _, err := l.reader.ReadRune()
+	l.peek = r
 	return err
 }
 
 func (l *Lexer) UnRead() error {
-	return l.reader.UnreadByte()
+	return l.reader.UnreadRune()
 }
 
 func (l *Lexer) ReadCharacter(c byte) (bool, error) {
@@ -300,7 +300,7 @@ func (l *Lexer) Scan() (Token, error) {
 
 	// 读取变量字符串
 	if unicode.IsLetter(rune(l.peek)) {
-		var buffer []byte
+		var buffer []rune
 		for {
 			buffer = append(buffer, l.peek)
 			l.Lexeme += string(l.peek)
@@ -331,7 +331,7 @@ func (l *Lexer) Scan() (Token, error) {
 }
 
 func (l *Lexer) ScanKeyword() (KeyWord, error) {
-	var buffer []byte
+	var buffer []rune
 	for {
 		buffer = append(buffer, l.peek)
 		l.Lexeme += string(l.peek)
@@ -357,20 +357,29 @@ func (l *Lexer) ScanKeyword() (KeyWord, error) {
 }
 
 func (l *Lexer) ScanString() (Token, error) {
-	var buffer []byte
+	var buffer []rune
 	for {
-		buffer = append(buffer, l.peek)
-		l.Lexeme += string(l.peek)
-
 		if err := l.Readch(); err == io.EOF {
 			break
 		}
-		if !unicode.IsLetter(rune(l.peek)) && l.peek != '"' {
-			if err := l.UnRead(); err != nil {
+
+		if l.peek == '\\' {
+			// 转义符
+			if err := l.Readch(); err == io.EOF {
 				break
 			}
+
+			buffer = append(buffer, l.peek)
+			l.Lexeme += string(l.peek)
+			continue
+		}
+
+		if l.peek == '"' {
 			break
 		}
+
+		buffer = append(buffer, l.peek)
+		l.Lexeme += string(l.peek)
 	}
 
 	return Token{
